@@ -2,10 +2,11 @@
 
 library(rvest)
 library(tidyverse)
+library(lubridate)
 
 
 # Scrape short sales data from the ASIC website
-daily_shorts <- read_csv("https://asic.gov.au/Reports/Daily/2021/04/RR20210412-001-SSDailyAggShortPos.csv")
+# daily_shorts <- read_csv("https://asic.gov.au/Reports/Daily/2021/04/RR20210412-001-SSDailyAggShortPos.csv")
 
 url <- "http://asic.gov.au/regulatory-resources/markets/short-selling/short-position-reports-table/"
 pg <- read_html(url)
@@ -43,17 +44,22 @@ daily_shorts_cleaned <- daily_shorts %>%
   # remove white space after product.code (and any character cols)
   mutate(across(where(is.character), str_trim)) %>% 
   
-  # rename columns
+  # rename required columns
   select(company = Product,
          ticker = Product.Code,
-         short_positions = Reported.Short.Positions,
-         shares_on_issue = Total.Product.in.Issue,
          short_ratio = X..of.Total.Product.in.Issue.Reported.as.Short.Positions) %>%
   
   # Create a label to place half way down geom_bar
   group_by(ticker) %>%
   mutate(label_y = cumsum(short_ratio) - 0.5 * short_ratio) %>% 
   ungroup()
+
+
+# Add Trade Date - may use later to look at changes over time.
+daily_shorts_cleaned <- daily_shorts_cleaned %>% 
+  mutate(trade_date = str_split(latest, 'RR', simplify = TRUE)[,2] %>%
+           str_sub(1,8) %>%
+           as_date())
 
 # PLOT ----
 
@@ -83,4 +89,23 @@ daily_shorts_cleaned %>%
 # Save ggplot
 ggsave("top_50_shorted_asx_stocks.png", plot = last_plot(), path = "images",
        width = 5, height = 8)
+
+
+
+# OPTIONAL - archive data in RDS file ------------------------------------------
+
+# Write initial tibble to rds file - only need to run once
+# daily_shorts_cleaned %>% write_rds("data/daily_shorts.rds")
+
+# Read historical rds file
+daily_shorts_history <- read_rds("data/daily_shorts.rds")
+
+# Combine with latest
+combined_tbl <- daily_shorts_history %>% bind_rows(daily_shorts_cleaned)
+
+# Update rds with latest information
+combined_tbl %>% write_rds("data/daily_shorts.rds")
+
+# REFERENCES ----
+# https://rpubs.com/Cormac/313070
 
