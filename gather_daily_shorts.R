@@ -60,6 +60,8 @@ daily_shorts_cleaned <- daily_shorts_cleaned %>%
   mutate(trade_date = str_split(latest, 'RR', simplify = TRUE)[,2] %>%
            str_sub(1,8) %>%
            as_date())
+# Review
+daily_shorts_cleaned
 
 # PLOT ----
 
