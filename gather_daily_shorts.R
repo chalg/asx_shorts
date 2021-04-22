@@ -105,6 +105,9 @@ daily_shorts_history <- read_rds("data/daily_shorts.rds")
 # Combine with latest
 combined_tbl <- daily_shorts_history %>% bind_rows(daily_shorts_cleaned)
 
+# Remove any duplicates
+combined_tbl <- combined_tbl %>% distinct()
+
 # Update rds with latest information
 combined_tbl %>% write_rds("data/daily_shorts.rds")
 
