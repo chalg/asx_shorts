@@ -3,6 +3,7 @@
 library(rvest)
 library(tidyverse)
 library(lubridate)
+library(wesanderson)
 
 
 # Scrape short sales data from the ASIC website
@@ -79,7 +80,7 @@ daily_shorts_cleaned %>%
   theme_light() +
   
   scale_fill_gradient(trans = "reverse", low = "#79402E", high = "#CCBA72") +
-  labs(title = "Top 50 most shorted ASX stocks", 
+  labs(title = "Top 50 most Shorted ASX stocks", 
        x = "",
        y = "Short Positions / Shares Outstanding (%)",
        caption = "Source: @GrantChalmers | https://asic.gov.au/") +
@@ -114,3 +115,59 @@ combined_tbl %>% write_rds("data/daily_shorts.rds")
 # REFERENCES ----
 # https://rpubs.com/Cormac/313070
 
+# Gather mean week-over-week change
+wk_over_wk_chg <- combined_tbl %>% 
+  mutate(week = week(trade_date),
+         year = isoyear(trade_date)) %>%
+  group_by(ticker, year, week) %>%
+  summarise(mean_short = mean(short_ratio)) %>% 
+  arrange(ticker, year, week) %>%
+  ungroup %>%
+  mutate(change = mean_short - lag(mean_short))
+  
+
+# Generate a top and bottom tibble, then bind rows
+top_30 <- wk_over_wk_chg %>% 
+  filter(week == max(week)) %>% 
+  arrange(desc(change)) %>% 
+  slice(1:30)
+
+bottom_30 <- wk_over_wk_chg %>% 
+  filter(week == max(week)) %>% 
+  arrange(change) %>% 
+  slice(1:30)
+
+top_30_bottom_30 <- bind_rows(top_30, bottom_30)
+
+# Plot
+top_30_bottom_30 %>% 
+  filter(week == max(week)) %>% 
+  arrange(desc(change)) %>% 
+  
+  ggplot(aes(x = fct_reorder(ticker, change), y = change)) +
+  geom_point(aes(colour = (change >= 0)), size = 2) + 
+  geom_segment(aes(x = ticker, 
+                   xend = ticker, 
+                   y = 0, 
+                   yend = change,
+                   colour = (change >= 0)), size = 0.75) +
+  scale_colour_manual(values = wes_palette("Darjeeling1")) +
+  
+  coord_flip() +
+  theme_light() +
+  
+  labs(title = "Shorted ASX Stocks Movement (top 30 & bottom 30)",
+       y = "Short Positions / Shares Outstanding Week over Week Change (%)", x = NULL,
+       caption = "Source: @GrantChalmers | https://asic.gov.au/") +
+  theme(plot.title = element_text(size = 11, face = "bold"),
+        axis.text.x = element_text(size = 10, angle = 00),
+        axis.title.x = element_text(size = 9),
+        axis.title = element_text(size = 11), legend.position = "none",
+        plot.caption = element_text(size = 8, color = "gray50", face = "italic"),
+        plot.background = element_rect(fill = 'antiquewhite', colour = 'antiquewhite'),
+        panel.background = element_rect(fill = 'snow'),
+        legend.title = element_blank())
+
+# Save ggplot
+ggsave("top_bottom_30_shorted_asx_stocks.png", plot = last_plot(), path = "images",
+       width = 6, height = 10)
