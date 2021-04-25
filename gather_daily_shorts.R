@@ -4,7 +4,7 @@ library(rvest)
 library(tidyverse)
 library(lubridate)
 library(wesanderson)
-
+library(ggtext)
 
 # Scrape short sales data from the ASIC website
 # daily_shorts <- read_csv("https://asic.gov.au/Reports/Daily/2021/04/RR20210412-001-SSDailyAggShortPos.csv")
@@ -99,6 +99,7 @@ ggsave("top_50_shorted_asx_stocks.png", plot = last_plot(), path = "images",
 
 # Write initial tibble to rds file - only need to run once
 # daily_shorts_cleaned %>% write_rds("data/daily_shorts.rds")
+# This script could be setup to run as a cron job (or Windows Task Scheduler) every weekday afternoon.
 
 # Read historical rds file
 daily_shorts_history <- read_rds("data/daily_shorts.rds")
@@ -152,14 +153,16 @@ top_30_bottom_30 %>%
                    yend = change,
                    colour = (change >= 0)), size = 0.75) +
   scale_colour_manual(values = wes_palette("Darjeeling1")) +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 12)) +
   
   coord_flip() +
   theme_light() +
   
-  labs(title = "Shorted ASX Stocks Movement (top 30 & bottom 30)",
+  labs(title = "Movement in Shorted ASX Stocks (<span style='color:#00A08A'>top</span> 30 & <span style='color:#FF0000'>bottom</span> 30)",
        y = "Short Positions / Shares Outstanding Week over Week Change (%)", x = NULL,
        caption = "Source: @GrantChalmers | https://asic.gov.au/") +
-  theme(plot.title = element_text(size = 11, face = "bold"),
+  theme(plot.title = element_markdown(face = "bold", size = 11),
+        # plot.title = element_text(size = 11, face = "bold"),
         axis.text.x = element_text(size = 10, angle = 00),
         axis.title.x = element_text(size = 9),
         axis.title = element_text(size = 11), legend.position = "none",
