@@ -37,7 +37,7 @@ daily_shorts <- read.csv(latest_csv,
                          sep = '\t', 
                          fileEncoding = "utf-16")
 
-# DATA WRANGLING ----
+# DATA WRANGLING 1 ----
 
 daily_shorts_cleaned <- daily_shorts %>%
   as_tibble() %>%
@@ -64,7 +64,7 @@ daily_shorts_cleaned <- daily_shorts_cleaned %>%
 # Review
 daily_shorts_cleaned
 
-# PLOT ----
+# VISUALISATION 1 ----
 
 daily_shorts_cleaned %>% 
   arrange(desc(short_ratio)) %>% 
@@ -94,7 +94,6 @@ ggsave("top_50_shorted_asx_stocks.png", plot = last_plot(), path = "images",
        width = 5, height = 8)
 
 
-
 # OPTIONAL - archive data in RDS file ------------------------------------------
 
 # Write initial tibble to rds file - only need to run once
@@ -113,8 +112,6 @@ combined_tbl <- combined_tbl %>% distinct()
 # Update rds with latest information
 combined_tbl %>% write_rds("data/daily_shorts.rds")
 
-# REFERENCES ----
-# https://rpubs.com/Cormac/313070
 
 # Gather mean week-over-week change
 wk_over_wk_chg <- combined_tbl %>% 
@@ -127,7 +124,10 @@ wk_over_wk_chg <- combined_tbl %>%
   mutate(change = mean_short - lag(mean_short))
   
 
+# DATA WRANGLING 2 ----
 # Generate a top and bottom tibble, then bind rows
+# Too much data to view all
+
 top_30 <- wk_over_wk_chg %>% 
   filter(week == max(week)) %>% 
   arrange(desc(change)) %>% 
@@ -140,7 +140,9 @@ bottom_30 <- wk_over_wk_chg %>%
 
 top_30_bottom_30 <- bind_rows(top_30, bottom_30)
 
+# VISUALISATION 2 ----
 # Plot
+
 top_30_bottom_30 %>% 
   filter(week == max(week)) %>% 
   arrange(desc(change)) %>% 
@@ -174,3 +176,7 @@ top_30_bottom_30 %>%
 # Save ggplot
 ggsave("top_bottom_30_shorted_asx_stocks.png", plot = last_plot(), path = "images",
        width = 6, height = 10)
+
+
+# REFERENCES ----
+# https://rpubs.com/Cormac/313070
