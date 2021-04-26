@@ -148,20 +148,20 @@ top_30_bottom_30 %>%
   arrange(desc(change)) %>% 
   
   ggplot(aes(x = fct_reorder(ticker, change), y = change)) +
-  geom_point(aes(colour = (change >= 0)), size = 2) + 
+  geom_point(aes(colour = (change <= 0)), size = 2) + 
   geom_segment(aes(x = ticker, 
                    xend = ticker, 
                    y = 0, 
                    yend = change,
-                   colour = (change >= 0)), size = 0.75) +
-  scale_colour_manual(values = wes_palette("Darjeeling1")) +
+                   colour = (change <= 0)), size = 0.75) +
+  scale_colour_manual(values = wes_palette("Moonrise2")) +
   scale_y_continuous(breaks = scales::pretty_breaks(n = 12)) +
   
   coord_flip() +
   theme_light() +
   
-  labs(title = "Movement in Shorted ASX Stocks (<span style='color:#00A08A'>top</span> 30 & <span style='color:#FF0000'>bottom</span> 30)",
-       y = "Short Positions / Shares Outstanding Week over Week Change (%)", x = NULL,
+  labs(title = "Movement in Shorted ASX Stocks (<span style='color:#798E87'>top</span> 30 & <span style='color:#C27D38'>bottom</span> 30)",
+       y = "Short Positions / Shares Outstanding Week over Week (mean) Change (%)", x = NULL,
        caption = "Source: @GrantChalmers | https://asic.gov.au/") +
   theme(plot.title = element_markdown(face = "bold", size = 11),
         # plot.title = element_text(size = 11, face = "bold"),
